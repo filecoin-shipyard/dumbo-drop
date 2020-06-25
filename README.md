@@ -60,6 +60,12 @@ The root block of the CAR file is a `dag-cbor` block containing a list of
 links to every unixfs file. The unixfs files are also not generated using
 the default importer settings and instead references `raw` blocks directly.
 
+These CAR files are also not guaranteed to match a deterministic selector
+on the root block (although they occastionally may) which is what the
+default dealflow in lotus relies on for arriving at a common CommP. That's
+why the final stage is to create CommP for every CAR file.
+
+
 ## Pipeline
 
 1. S3 Bucket With Existing Files
@@ -94,7 +100,3 @@ with all pre-requisites - this may take a few minutes.  Once the building is
 done, you can open a shell in the container via: Terminal->New Terminal or
 (Control+Shift+`) 
 
-These CAR files are also not guaranteed to match a deterministic selector
-on the root block (although they occastionally may) which is what the
-default dealflow in lotus relies on for arriving at a common CommP. That's
-why the final stage is to create CommP for every CAR file.
