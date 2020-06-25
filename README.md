@@ -30,3 +30,21 @@ TODO
 * DUMBO_COMMP_TABLE - dynamo table name for commp?
 * DUMBO_CREATE_PART_LAMBDA - lambda function name to create parts from files
 * DUMBO_PARSE_FILE_LAMBDA - labmda function name to parse file 
+
+## Getting Started
+
+This project includes support Visual Studio Code Remote Containers which 
+enables everything needed for development and running in a docker container.
+You can use this by installing:
+
+* Visual Studio Code
+  * Remote Containers Extension
+* Docker Desktop (for Mac or Windows) or Docker CE (for Linux)
+
+Once these are installed, open the folder of this project in Visual Studio
+Code and left click the green box in the bottom right and choose "Reopen in
+container".  The first time you do this, a docker container will be built
+with all pre-requisites - this may take a few minutes.  Once the building is
+done, you can open a shell in the container via: Terminal->New Terminal or
+(Control+Shift+`) 
+
