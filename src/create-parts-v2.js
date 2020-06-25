@@ -15,7 +15,7 @@ const seen = new Set()
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 
-const lambdaName = 'InitStaging-GetCreatePartV2-14GP6JEASGDHH'
+const lambdaName = process.env.DUMBO_CREATE_PART_LAMBDA
 const createPartsRequest = async (opts, retries = 5) => {
   let ret
   try {
