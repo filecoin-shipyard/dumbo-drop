@@ -8,6 +8,8 @@ const bent = require('bent')
 const head = bent('HEAD', 200, 403, 500 /* these are intermittent and retries tend to fix */)
 const remainingTime = require('remaining-time')
 
+const sleep = ts => new Promise(resolve => setTimeout(resolve, ts))
+
 const AWS = require('aws-sdk')
 const awsConfig = require('aws-config')
 const sep = '\n\n\n\n\n\n\n\n'
@@ -168,7 +170,6 @@ const run = async (Bucket, Prefix, StartAfter, concurrency = 500, checkHead = fa
     }
   }
   for await (let fileInfo of ls(opts)) {
-    console.log({fileInfo})
     if (!fileInfo.Size) continue
     fileInfo = { ...fileInfo, ...opts }
 
@@ -182,9 +183,11 @@ const run = async (Bucket, Prefix, StartAfter, concurrency = 500, checkHead = fa
 
     if (fileInfo.Size > upperLimit) {
       await limit(parse(fileInfo))
+      await sleep(500)
       continue
     } else if (((bulkLength() + fileInfo.Size) > upperLimit) || bulk.length > 99) {
       await limit(runBulk(bulk))
+      await sleep(500)
       bulk = []
     }
     bulk.push(fileInfo)
