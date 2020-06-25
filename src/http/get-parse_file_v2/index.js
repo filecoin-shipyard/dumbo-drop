@@ -16,7 +16,7 @@ const parseFile = async (blockBucket, limit, url, headers, retries = 2) => {
       if (!retries) {
         throw new Error(`Unacceptable error code: ${e.statusCode} for ${url}`)
       }
-      return parseFile(limit, url, null, retries - 1)
+      return parseFile(blockBucket, limit, url, null, retries - 1)
     } else {
       throw e
     }
