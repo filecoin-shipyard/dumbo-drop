@@ -8,6 +8,8 @@ const bent = require('bent')
 const head = bent('HEAD', 200, 403, 500 /* these are intermittent and retries tend to fix */)
 const remainingTime = require('remaining-time')
 
+const sleep = ts => new Promise(resolve => setTimeout(resolve, ts))
+
 const AWS = require('aws-sdk')
 const awsConfig = require('aws-config')
 const sep = '\n\n\n\n\n\n\n\n'
@@ -71,7 +73,7 @@ const run = async (Bucket, Prefix, StartAfter, concurrency = 500, checkHead = fa
   const opts = { Bucket, Prefix, StartAfter }
   const limit = limiter(concurrency)
   const display = { Bucket, skipped: 0, skippedBytes: 0, complete: 0, processed: 0 }
-  const blockBucket = 'dumbo-v2-block-bucket'
+  const blockBucket = process.env.DUMBO_BLOCK_STORE
 
   // if we have a state file, read it and resume processing from that point.  If no state
   // file initialize it to start a fresh run
@@ -191,9 +193,11 @@ const run = async (Bucket, Prefix, StartAfter, concurrency = 500, checkHead = fa
 
     if (fileInfo.Size > upperLimit) {
       await limit(parse(fileInfo))
+      await sleep(500)
       continue
     } else if (((bulkLength() + fileInfo.Size) > upperLimit) || bulk.length > 99) {
       await limit(runBulk(bulk))
+      await sleep(500)
       bulk = []
     }
     bulk.push(fileInfo)

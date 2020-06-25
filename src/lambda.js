@@ -1,6 +1,8 @@
 const { Lambda } = require('./aws')
 const awsConfig = require('aws-config')
 
+const sleep = ts => new Promise(resolve => setTimeout(resolve, ts))
+
 class LambdaError extends Error {
   constructor (data, retries) {
     if (!data) return super(data)
@@ -33,6 +35,10 @@ const create = (http, profile, region = 'us-west-2') => {
     const data = JSON.parse(resp.Payload)
     if (!data) throw new Error(`No response payload for ${name}(${JSON.stringify(query)})`)
     if (data.errorMessage) {
+      if (retries > 0 && data.errorMessage.includes('Please reduce your request rate')) {
+        await sleep(1500)
+        return _run(name, query, retries - 1)
+      }
       if (retries > 0 && (
         data.errorMessage.endsWith('Process exited before completing request') ||
         data.errorMessage.includes('We encountered an internal error') ||
