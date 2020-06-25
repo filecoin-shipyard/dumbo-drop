@@ -1,3 +1,6 @@
+// manages a list of async functions and makes sure that
+// no more than <concurrency> are running at once
+
 const limiter = concurrency => {
   const pending = new Set()
   let next

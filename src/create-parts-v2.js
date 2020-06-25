@@ -16,11 +16,13 @@ const seen = new Set()
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 const lambdaName = process.env.DUMBO_CREATE_PART_LAMBDA
+// invokes lambda fucntion to create the car parts?
 const createPartsRequest = async (opts, retries = 5) => {
   let ret
   try {
     ret = await lambda(lambdaName, opts)
   } catch (e) {
+    // retry this request if we get a failure
     await sleep(Math.floor(10000 * Math.random()))
     if (e.retries && retries) return createPartsRequest(opts, retries - 1)
     throw e
@@ -28,6 +30,7 @@ const createPartsRequest = async (opts, retries = 5) => {
   return ret
 }
 
+// print out current status (called by interval function set below)
 const history = []
 const print = () => {
   history.push(output.completedBytes)
@@ -42,6 +45,7 @@ const print = () => {
 
 const allocations = []
 
+// get list of files to turn into car parts
 const ls = db => {
   const attrs = ['carUrl', 'size', 'url', 'split']
   const params = db.mkquery(attrs, { true: true })
@@ -52,6 +56,7 @@ const ls = db => {
 
 let lastUrl
 
+// get urls to process
 const getUrls = async function * (db) {
   for await (const { url, size } of ls(db)) {
     if (size > maxSize) throw new Error('Part slice too large')
@@ -83,6 +88,7 @@ const getUrls = async function * (db) {
 
 let updateMutex = null
 
+// creates a car part from a list of files
 const createPart = async (bucket, db, urls, size) => {
   output.inflight++
   const files = await db.getItems(urls, 'parts', 'size')
@@ -113,9 +119,13 @@ const createPart = async (bucket, db, urls, size) => {
   output.inflight--
 }
 
+// entry point for file
 const run = async argv => {
   let interval
+  // setup interval to print out progress/status
   if (!argv.silent) interval = setInterval(print, 1000)
+
+  // create bucket for cars
   const { bucket, concurrency } = argv
   try {
     await s3.createBucket({ Bucket: `dumbo-v2-cars-${bucket}`, ACL: 'public-read' }).promise()
@@ -127,6 +137,8 @@ const run = async argv => {
 
   const limit = limiter(concurrency)
 
+  // get list of urls to files to process and create cars from them
+  // using the limiter
   for await (const [size, urls] of getUrls(db, bucket)) {
     if (urls.length > output.largest) output.largest = urls.length
     await limit(createPart(bucket, db, urls, size))
