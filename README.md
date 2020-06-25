@@ -25,10 +25,8 @@ TODO
    * Reads list of files and IPLD Block CIDs from dynamo created in step 2
    * Generates Car files from the IPLD blocks and writes them to S3
 
- 
-
 ## Environment Variables
 
-DUMBO_COMMP_TABLE - dynamo table name for commp?
-DUMBO_CREATE_PART_LAMBDA - lambda function name to create parts from files
-DUMBO_PARSE_FILE_LAMBDA - labmda function name to parse file 
+* DUMBO_COMMP_TABLE - dynamo table name for commp?
+* DUMBO_CREATE_PART_LAMBDA - lambda function name to create parts from files
+* DUMBO_PARSE_FILE_LAMBDA - labmda function name to parse file 
