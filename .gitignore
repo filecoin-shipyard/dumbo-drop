@@ -1,4 +1,5 @@
 .nyc_output
+.arc-env
 build
 dist
 coverage
@@ -6,3 +7,5 @@ package-lock.json
 node_modules
 .DS_Store
 yarn.lock
+sam.*
+.state*

@@ -6,8 +6,8 @@ const get = bent(200, 206)
 const createStore = require('./store')
 const limiter = require('./limiter')
 
-const parseFile = async (limit, url, headers, retries = 2) => {
-  const store = createStore(Block, 'dumbo-v2-block-bucket')
+const parseFile = async (blockBucket, limit, url, headers, retries = 2) => {
+  const store = createStore(Block, blockBucket)
   let stream
   try {
     stream = await get(url, null, headers)
@@ -31,9 +31,11 @@ const parseFile = async (limit, url, headers, retries = 2) => {
 }
 
 exports.handler = async (req) => {
+  const blockBucket = req.query.blockBucket
+  if (!blockBucket) throw new Error('Must pass blockBucket in options')
   const limit = limiter(100)
   if (req.query.url) {
-    const cids = await parseFile(limit, req.query.url, req.query.headers)
+    const cids = await parseFile(blockBucket, limit, req.query.url, req.query.headers)
     await limit.wait()
     return {
       headers: { 'content-type': 'application/json; charset=utf8' },
@@ -42,7 +44,7 @@ exports.handler = async (req) => {
   } else if (req.query.urls) {
     const ret = {}
     for (const url of req.query.urls) {
-      const cids = await parseFile(limit, url)
+      const cids = await parseFile(blockBucket, limit, url)
       ret[url] = cids.map(c => c.toString('base64'))
     }
     await limit.wait()

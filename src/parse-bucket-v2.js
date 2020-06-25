@@ -69,7 +69,7 @@ const run = async (Bucket, Prefix, StartAfter, concurrency = 500, checkHead = fa
   const opts = { Bucket, Prefix, StartAfter }
   const limit = limiter(concurrency)
   const display = { Bucket, skipped: 0, skippedBytes: 0, complete: 0, processed: 0 }
-  const blockBucket = 'dumbo-v2-block-bucket'
+  const blockBucket = process.env.DUMBO_BLOCK_STORE
 
   const stateFile = `.state-${Bucket}`
   const loadState = async () => {
@@ -168,6 +168,7 @@ const run = async (Bucket, Prefix, StartAfter, concurrency = 500, checkHead = fa
     }
   }
   for await (let fileInfo of ls(opts)) {
+    console.log({fileInfo})
     if (!fileInfo.Size) continue
     fileInfo = { ...fileInfo, ...opts }
 

@@ -104,4 +104,3 @@ module.exports = parseFile
 module.exports.files = parseFiles
 module.exports.debug = debug
 
-// parseFile('https://prd-tnm.s3.amazonaws.com/StagedProducts/Contours/National/GDB/Elevation_National_GDB.zip', 'prd-tnm', 92892240919)

@@ -90,7 +90,7 @@ const createPart = async (bucket, db, urls, size) => {
     files[f] = [item.parts, item.size]
   }
 
-  const blockBucket = 'dumbo-v2-block-bucket'
+  const blockBucket = process.env.DUMBO_BLOCK_BUCKET
   const query = { Bucket: `dumbo-v2-cars-${bucket}`, files, blockBucket }
   const resp = await createPartsRequest(query)
   const { results, details, root } = resp
