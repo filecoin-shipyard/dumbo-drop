@@ -35,8 +35,8 @@ exports.handler = async (req) => {
   const urls = {}
   const roots = []
   const dagBlocks = []
-  // iterate over each file collecting the blocks and generating
-  // root block referencing each part
+  // iterate over each file/file slice pointer collecting the block cids
+  // Then generate the root block referencing all collected block cids
   for (let [filename, [_parts, size]] of Object.entries(files)) {
     const parts = []
     for (const cid of _parts) {
@@ -51,7 +51,8 @@ exports.handler = async (req) => {
     ret[filename] = [roots.length - 1, root.toString('base32')]
   }
 
-  // create a root pointing to the roots of each file
+  // The root of the car file is an ipld block with a list of cids contained
+  // in this car file.
   const rootBlock = Block.encoder(roots, 'dag-cbor')
   dagBlocks.push(rootBlock)
 

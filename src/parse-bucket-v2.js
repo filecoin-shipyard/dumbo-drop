@@ -16,6 +16,9 @@ const sep = '\n\n\n\n\n\n\n\n'
 
 const tb = 1024 * 1024 * 1024 * 1024
 
+
+const awsRegion = new AWS.Config().region;
+
 let latest
 
 const skipItem = async (db, url, checkHead = false) => {
@@ -61,7 +64,7 @@ const getURL = fileInfo => {
   if (fileInfo.Bucket.includes('.')) {
     return `https://s3.amazonaws.com/${fileInfo.Bucket}/${AWS.util.uriEscapePath(fileInfo.Key)}`
   } else {
-    return `https://${fileInfo.Bucket}.s3.amazonaws.com/${AWS.util.uriEscapePath(fileInfo.Key)}`
+    return `https://${fileInfo.Bucket}.s3.${awsRegion}.amazonaws.com/${AWS.util.uriEscapePath(fileInfo.Key)}`
   }
 }
 
@@ -199,7 +202,7 @@ const run = async (Bucket, Prefix, StartAfter, concurrency = 500, checkHead = fa
       await limit(runBulk(bulk))
       await sleep(500)
       bulk = []
-    }
+    } 
     bulk.push(fileInfo)
   }
   await limit(runBulk(bulk))

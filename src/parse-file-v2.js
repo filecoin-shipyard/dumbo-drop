@@ -1,5 +1,20 @@
 const lambda = require('./lambda')()
 
+/*
+const get_parse_file_v2 = require('./http/get-parse_file_v2');
+const lambda = async (functionName, opts) => {
+  return new Promise(async(resolve) => {
+    const result = await get_parse_file_v2.handler({
+      query: opts
+    })
+    console.log('result=', result)
+    const body = JSON.parse(result.body)
+    console.log(body)
+    resolve(body)
+  })
+}
+*/
+
 const functionName = process.env.DUMBO_PARSE_FILE_LAMBDA
 
 const limit = 1024 * 1024 * 912

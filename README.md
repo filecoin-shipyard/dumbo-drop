@@ -11,6 +11,8 @@ built.
 ## Setup
 
 * Create block bucket
+  * Allow public access by unchecking "Block all public access"
+* make sure source data bucket allows public data access
 * Create Dynamo Table named `dumbo-v2-{source-bucket-name}`
   * partition key must be "url"
   * configure bucket to have its capacity "on-demand"
@@ -100,3 +102,52 @@ with all pre-requisites - this may take a few minutes.  Once the building is
 done, you can open a shell in the container via: Terminal->New Terminal or
 (Control+Shift+`) 
 
+## Configuration needed
+
+Setup your aws cli
+
+> aws configure
+
+Enable ASW SDK support
+
+> export AWS_SDK_LOAD_CONFIG=1
+
+Deploy your lambdas
+
+> arc deploy
+
+Take the lambda urls from the s3 console for GetParseFileV2
+
+> export DUMBO_PARSE_FILE_LAMBDA=InitStaging-GetParseFileV2-110HY43XW9LJ
+
+Export S3 bucket to use for IPLD Block Store
+
+> export DUMBO_BLOCK_STORE=chafey-dump-drop-test-block2
+
+Import your data:
+
+> ./cli.js pull-bucket-v2 chafey-dumbo-drop-test2 --concurrency 1 --checkHead
+
+## IAM Policy for lambda functions
+
+AWS requires granting your lambda functions access to s3 and dynamodb.  You can 
+grant full access using the following policy:
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "ExampleStmt",
+            "Action": [
+                "s3:*",
+                "dynamodb:*"
+            ],
+            "Effect": "Allow",
+            "Resource": [
+                "*"
+            ]
+        }
+    ]
+}
+```
