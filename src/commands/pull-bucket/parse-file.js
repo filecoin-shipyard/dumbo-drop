@@ -1,4 +1,5 @@
-const lambda = require('./lambda')()
+const lambda = require('../../lambda')()
+const limits = require('../../limits')
 
 /*
 const get_parse_file_v2 = require('./http/get-parse_file_v2');
@@ -17,8 +18,7 @@ const lambda = async (functionName, opts) => {
 
 const functionName = process.env.DUMBO_PARSE_FILE_LAMBDA
 
-const limit = 1024 * 1024 * 912
-
+const limit = limits.MAX_CAR_FILE_SIZE
 let writeMutex
 
 const debug = { pending: 0, free: 0 }
@@ -64,8 +64,8 @@ const saveSplits = async (db, url, dataset, splits, size) => {
     const writes = []
     for (const parts of splits) {
       const _size = size
-      size -= limit
-      const l = _size < limit ? _size : limit
+      size -= limits.MAX_CAR_FILE_SIZE
+      const l = _size < limits.MAX_CAR_FILE_SIZE ? _size : limits.MAX_CAR_FILE_SIZE
       const item = { size: l, dataset, parts, url: `::split::${url}::${i}` }
       writes.push(db.putItem(item))
       i++
@@ -89,10 +89,10 @@ const saveSplits = async (db, url, dataset, splits, size) => {
 // limit, then it is split into multiple pieces in dynamo to work around
 // a data size limit in dynamo
 const parseFile = async (tableName, blockBucket, url, dataset, size) => {
-  const db = require('./queries')(tableName)
+  const db = require('../../queries')(tableName)
   let opts = { url, blockBucket }
   let parts = []
-  if (size < limit) {
+  if (size < limits.MAX_CAR_FILE_SIZE) {
     parts = await lambda(functionName, opts)
     const resp = await saveFile(db, url, dataset, parts, size)
     return resp
@@ -100,10 +100,10 @@ const parseFile = async (tableName, blockBucket, url, dataset, size) => {
     let i = 0
     const splits = []
     while (i < size) {
-      opts = { url, headers: { Range: `bytes=${i}-${(i + limit) - 1}` }, blockBucket }
+      opts = { url, headers: { Range: `bytes=${i}-${(i + limits.MAX_CAR_FILE_SIZE) - 1}` }, blockBucket }
       const chunks = await lambda(functionName, opts)
       splits.push(chunks)
-      i += limit
+      i += limits.MAX_CAR_FILE_SIZE
     }
     const resp = await saveSplits(db, url, dataset, splits, size)
     return resp
@@ -113,7 +113,7 @@ const parseFile = async (tableName, blockBucket, url, dataset, size) => {
 // batch interface for parsing multiple small files into IPLD blocks stored in S3
 // using a lambda function and saving resulting CIDs in dynamo
 const parseFiles = async (tableName, blockBucket, files, dataset) => {
-  const db = require('./queries')(tableName)
+  const db = require('../../queries')(tableName)
   const urls = Object.keys(files)
   const opts = { urls, blockBucket }
   const resp = await lambda(functionName, opts)
