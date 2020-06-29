@@ -8,6 +8,7 @@ const encodeKey = cid => {
   const full = `${key}/encode`
   return full
 }
+// IPLD block store for S3
 module.exports = (Block, Bucket, ACL = 'public-read') => {
   const put = async block => {
     const params = {

@@ -11,6 +11,8 @@ built.
 ## Setup
 
 * Create block bucket
+  * Allow public access by unchecking "Block all public access"
+* make sure source data bucket allows public data access
 * Create Dynamo Table named `dumbo-v2-{source-bucket-name}`
   * partition key must be "url"
   * configure bucket to have its capacity "on-demand"
@@ -64,3 +66,88 @@ These CAR files are also not guaranteed to match a deterministic selector
 on the root block (although they occastionally may) which is what the
 default dealflow in lotus relies on for arriving at a common CommP. That's
 why the final stage is to create CommP for every CAR file.
+
+
+## Pipeline
+
+1. S3 Bucket With Existing Files
+2. Run pull-bucket-v2
+   * Gets list of files in S3 bucket from step 1
+   * Chunks each file into an IPLD Block which is stored in s3
+   * Saves information about each file and generated IPLD Block CIDs in dynamo
+3. Run create-parts-v2
+   * Reads list of files and IPLD Block CIDs from dynamo created in step 2
+   * Generates Car files from the IPLD blocks and writes them to S3
+
+## Environment Variables
+
+* DUMBO_COMMP_TABLE - dynamo table name for commp?
+* DUMBO_CREATE_PART_LAMBDA - lambda function name to create parts from files
+* DUMBO_PARSE_FILE_LAMBDA - labmda function name to parse file 
+
+## Getting Started
+
+This project includes support Visual Studio Code Remote Containers which 
+enables everything needed for development and running in a docker container.
+You can use this by installing:
+
+* Visual Studio Code
+  * Remote Containers Extension
+* Docker Desktop (for Mac or Windows) or Docker CE (for Linux)
+
+Once these are installed, open the folder of this project in Visual Studio
+Code and left click the green box in the bottom right and choose "Reopen in
+container".  The first time you do this, a docker container will be built
+with all pre-requisites - this may take a few minutes.  Once the building is
+done, you can open a shell in the container via: Terminal->New Terminal or
+(Control+Shift+`) 
+
+## Configuration needed
+
+Setup your aws cli
+
+> aws configure
+
+Enable ASW SDK support
+
+> export AWS_SDK_LOAD_CONFIG=1
+
+Deploy your lambdas
+
+> arc deploy
+
+Take the lambda urls from the s3 console for GetParseFileV2
+
+> export DUMBO_PARSE_FILE_LAMBDA=InitStaging-GetParseFileV2-110HY43XW9LJ
+
+Export S3 bucket to use for IPLD Block Store
+
+> export DUMBO_BLOCK_STORE=chafey-dump-drop-test-block2
+
+Import your data:
+
+> ./cli.js pull-bucket-v2 chafey-dumbo-drop-test2 --concurrency 1 --checkHead
+
+## IAM Policy for lambda functions
+
+AWS requires granting your lambda functions access to s3 and dynamodb.  You can 
+grant full access using the following policy:
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "ExampleStmt",
+            "Action": [
+                "s3:*",
+                "dynamodb:*"
+            ],
+            "Effect": "Allow",
+            "Resource": [
+                "*"
+            ]
+        }
+    ]
+}
+```

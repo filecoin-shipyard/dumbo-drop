@@ -16,6 +16,9 @@ const sep = '\n\n\n\n\n\n\n\n'
 
 const tb = 1024 * 1024 * 1024 * 1024
 
+
+const awsRegion = new AWS.Config().region;
+
 let latest
 
 const skipItem = async (db, url, checkHead = false) => {
@@ -42,6 +45,7 @@ const skipItems = async (db, urls, checkHead = false, force = false) => {
   return found
 }
 
+// returns list of files in bucket
 const ls = async function * (opts) {
   opts = { ...opts }
   let data
@@ -60,19 +64,22 @@ const getURL = fileInfo => {
   if (fileInfo.Bucket.includes('.')) {
     return `https://s3.amazonaws.com/${fileInfo.Bucket}/${AWS.util.uriEscapePath(fileInfo.Key)}`
   } else {
-    return `https://${fileInfo.Bucket}.s3.amazonaws.com/${AWS.util.uriEscapePath(fileInfo.Key)}`
+    return `https://${fileInfo.Bucket}.s3.${awsRegion}.amazonaws.com/${AWS.util.uriEscapePath(fileInfo.Key)}`
   }
 }
 
 const inflight = []
 const upperLimit = 1024 * 1024 * 912
 
+// main entrypoint for parsing a bucket
 const run = async (Bucket, Prefix, StartAfter, concurrency = 500, checkHead = false, force = false) => {
   const opts = { Bucket, Prefix, StartAfter }
   const limit = limiter(concurrency)
   const display = { Bucket, skipped: 0, skippedBytes: 0, complete: 0, processed: 0 }
   const blockBucket = process.env.DUMBO_BLOCK_STORE
 
+  // if we have a state file, read it and resume processing from that point.  If no state
+  // file initialize it to start a fresh run
   const stateFile = `.state-${Bucket}`
   const loadState = async () => {
     let f
@@ -90,6 +97,8 @@ const run = async (Bucket, Prefix, StartAfter, concurrency = 500, checkHead = fa
   } else {
     state = { completed: 0 }
   }
+  // setup a timer to periodically save our current processing state so we can resume
+  // if something goes wrong
   const saveState = async () => {
     state.startAfter = inflight.length ? inflight[0] : latest || state.startAfter
     const _state = {
@@ -109,6 +118,7 @@ const run = async (Bucket, Prefix, StartAfter, concurrency = 500, checkHead = fa
 
   const db = require('./queries')(tableName)
 
+  // Function to parse a single file
   const sizes = []
   const parse = async info => {
     if (info.Size) {
@@ -124,6 +134,7 @@ const run = async (Bucket, Prefix, StartAfter, concurrency = 500, checkHead = fa
       }
     }
   }
+  // interval timer to print out processing progress
   const interval = setInterval(() => {
     const outs = { ...display }
     sizes.push(outs.processed)
@@ -143,6 +154,7 @@ const run = async (Bucket, Prefix, StartAfter, concurrency = 500, checkHead = fa
     logUpdate(JSON.stringify(outs, null, 2))
   }, 1000)
 
+  // function to parse multiple files at once
   let bulk = []
   const bulkLength = () => bulk.reduce((x, y) => x + y.Size, 0)
   const runBulk = async _bulk => {
@@ -169,6 +181,7 @@ const run = async (Bucket, Prefix, StartAfter, concurrency = 500, checkHead = fa
       display.processed += Object.values(files).reduce((x, y) => x + y, 0)
     }
   }
+  // get list of files from bucket and parse them through the limiter
   for await (let fileInfo of ls(opts)) {
     if (!fileInfo.Size) continue
     fileInfo = { ...fileInfo, ...opts }
@@ -189,7 +202,7 @@ const run = async (Bucket, Prefix, StartAfter, concurrency = 500, checkHead = fa
       await limit(runBulk(bulk))
       await sleep(500)
       bulk = []
-    }
+    } 
     bulk.push(fileInfo)
   }
   await limit(runBulk(bulk))

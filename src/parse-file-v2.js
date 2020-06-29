@@ -1,5 +1,20 @@
 const lambda = require('./lambda')()
 
+/*
+const get_parse_file_v2 = require('./http/get-parse_file_v2');
+const lambda = async (functionName, opts) => {
+  return new Promise(async(resolve) => {
+    const result = await get_parse_file_v2.handler({
+      query: opts
+    })
+    console.log('result=', result)
+    const body = JSON.parse(result.body)
+    console.log(body)
+    resolve(body)
+  })
+}
+*/
+
 const functionName = process.env.DUMBO_PARSE_FILE_LAMBDA
 
 const limit = 1024 * 1024 * 912
@@ -10,6 +25,7 @@ const debug = { pending: 0, free: 0 }
 
 const sep = '\n\n\n\n\n\n\n\n\n\n'
 
+// saves the parsing results for a single file to dynamo.
 const saveFile = async (db, url, dataset, parts, size) => {
   const item = { url, size, dataset, parts }
   debug.pending++
@@ -66,6 +82,12 @@ const saveSplits = async (db, url, dataset, splits, size) => {
   return [resp, ...writeResponses]
 }
 
+// parses a file by invoking the lambda function to read the file,
+// chunk it into IPLD blocks, store those blocks in S3 and write
+// the resulting info (including CIDs) into dynamo.
+// If the file size exceeds a certain
+// limit, then it is split into multiple pieces in dynamo to work around
+// a data size limit in dynamo
 const parseFile = async (tableName, blockBucket, url, dataset, size) => {
   const db = require('./queries')(tableName)
   let opts = { url, blockBucket }
@@ -88,6 +110,8 @@ const parseFile = async (tableName, blockBucket, url, dataset, size) => {
   }
 }
 
+// batch interface for parsing multiple small files into IPLD blocks stored in S3
+// using a lambda function and saving resulting CIDs in dynamo
 const parseFiles = async (tableName, blockBucket, files, dataset) => {
   const db = require('./queries')(tableName)
   const urls = Object.keys(files)

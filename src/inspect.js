@@ -83,7 +83,7 @@ const run = async argv => {
     console.log('BAD CAR PART ALLOCATOR', carPartsTotal - allocator.size, carPartsTotal, allocator.size)
   }
   let urlsInParts = 0
-  for await (const [part, urls] of createParts.getUrls(db)) {
+  for await (const [part, urls] of createParts.getItemsForCARFile(db)) {
     urlsInParts += urls.length
   }
   const _carurl = items => [

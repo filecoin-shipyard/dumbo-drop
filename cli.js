@@ -7,6 +7,7 @@ const inspect = require('./src/inspect')
 const runPullBucketV2 = async argv => {
   await parseBucketV2(argv.bucket, argv.prefix, argv.start, argv.concurrency, argv.checkHead, argv.force)
   console.log('all done :)')
+  process.exit(0) // HACK: force process to exit because it doesn't right now...
 }
 
 const bucketOptions = yargs => {
