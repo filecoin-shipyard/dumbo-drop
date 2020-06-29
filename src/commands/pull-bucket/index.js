@@ -1,7 +1,7 @@
-const parseFile = require('./parse-file-v2')
+const parseFile = require('./parse-file')
 const { readFile, writeFile } = require('fs').promises
 const { writeFileSync } = require('fs')
-const limiter = require('./limiter')
+const limiter = require('../../limiter')
 const prettyBytes = require('pretty-bytes')
 const logUpdate = require('log-update')
 const bent = require('bent')
@@ -12,10 +12,6 @@ const sleep = ts => new Promise(resolve => setTimeout(resolve, ts))
 
 const AWS = require('aws-sdk')
 const awsConfig = require('aws-config')
-const sep = '\n\n\n\n\n\n\n\n'
-
-const tb = 1024 * 1024 * 1024 * 1024
-
 
 const awsRegion = new AWS.Config().region;
 
@@ -116,7 +112,7 @@ const run = async (Bucket, Prefix, StartAfter, concurrency = 500, checkHead = fa
   // TODO: check for table and create if missing
   const tableName = `dumbo-v2-${Bucket}`
 
-  const db = require('./queries')(tableName)
+  const db = require('../../queries')(tableName)
 
   // Function to parse a single file
   const sizes = []

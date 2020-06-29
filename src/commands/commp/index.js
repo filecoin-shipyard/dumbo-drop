@@ -1,8 +1,8 @@
 const AWS = require('aws-sdk')
 const awsConfig = require('aws-config')
-const { putItem, getItem } = require('./queries')(process.env.DUMBO_COMMP_TABLE)
-const limiter = require('./limiter')
-const lambda = require('./lambda').raw
+const { putItem, getItem } = require('../../queries')(process.env.DUMBO_COMMP_TABLE)
+const limiter = require('../../limiter')
+const lambda = require('../../lambda').raw
 const logUpdate = require('log-update')
 const prettyBytes = require('pretty-bytes')
 

@@ -151,3 +151,17 @@ grant full access using the following policy:
     ]
 }
 ```
+
+## Design notes
+
+* S3 currently has an upper limit on requested/second for a given prefix (or directory).  To avoid these limits, we store
+  each block and car file in a folder with the CID for that block/car file.  This strategy ensures we don't hit the 
+  upper limits as CIDs are essentially random numbers since they mainly contain the output of the block hash function.
+* We have an upper limit of 912MB or 2000 files on a CAR file, whichever is hit first.  
+  * The 2000 file limit is to ensure we have enough space in one block to
+    store all CIDs for the CAR file.  In the case of many small files, we would
+    exceed the max block size of 1GB just storing the CIDs for the blocks.  
+  * The 912MB limit ensures that we are under 1GB in size when including CAR
+    file overhead, unixfs overhead and some padding needed for commp generation
+* DynamoDB is designed for relatively small documents (~10k).  For large files, we get much
+  larger than this (400k)      

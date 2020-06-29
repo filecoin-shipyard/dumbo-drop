@@ -1,15 +1,13 @@
-const AWS = require('./aws')
+const AWS = require('../../aws')
 const awsConfig = require('aws-config')
 const logUpdate = require('log-update')
 const prettyBytes = require('pretty-bytes')
-const lambda = require('./lambda')()
-const limiter = require('./limiter')
+const lambda = require('../../lambda')()
+const limiter = require('../../limiter')
 const s3 = new AWS.S3({ ...awsConfig(), correctCloseSkew: true })
+const limits = require('../../limits')
 
 const output = { completed: 0, completedBytes: 0, inflight: 0, updateQueue: 0, largest: 0 }
-
-// TODO: rename to MAX_CAR_FILE_SIZE
-const maxSize = 1024 * 1024 * 912
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 
@@ -46,9 +44,9 @@ const ls = db => {
 // to be aggregated together into a single car file.  
 const getItemsForCARFile = async function * (db) {
   for await (const { url, size } of ls(db)) {
-    if (size > maxSize) throw new Error('Part slice too large')
+    if (size > limits.MAX_CAR_FILE_SIZE) throw new Error('Part slice too large')
     // for files or file slices of carfile maxsize, encode it into a single car file
-    if (size === maxSize) {
+    if (size === limits.MAX_CAR_FILE_SIZE) {
       yield [size, [url]]
       continue
     }
@@ -60,15 +58,13 @@ const getItemsForCARFile = async function * (db) {
       const [_size, _urls] = allocations[i]
       const csize = _size + size
       // if adding this file part/slice does not exceed max car file size..
-      if (csize < maxSize) {
+      if (csize < limits.MAX_CAR_FILE_SIZE) {
         // merge this file part/slice into the allocation entry
         const entryUrls = [..._urls, url]
         const entry = [csize, entryUrls]
 
         // check to see if we should create a car file now
-        // TODO: replace 1024*1024 with constant (e.g. MAX_BLOCK_SIZE)
-        // TODO: Document why 2000 is the upper limit on number of urls
-        if ((csize > (maxSize - (1024 * 1024))) || entryUrls.length > 2000) {
+        if ((csize > (limits.MAX_CAR_FILE_SIZE - (limits.MAX_BLOCK_SIZE))) || entryUrls.length > limits.MAX_CAR_FILES) {
           // yes - remove the accumulated entries and return them
           allocations.splice(i, 1)
           yield entry
@@ -135,7 +131,7 @@ const run = async argv => {
 
   const tableName = `dumbo-v2-${bucket}`
 
-  const db = require('./queries')(tableName)
+  const db = require('../../queries')(tableName)
 
   const limit = limiter(concurrency)
 

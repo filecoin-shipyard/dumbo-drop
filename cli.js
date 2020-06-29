@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-const parseBucketV2 = require('./src/parse-bucket-v2')
-const createPartsV2 = require('./src/create-parts-v2')
-const commp = require('./src/commp')
-const inspect = require('./src/inspect')
+const parseBucketV2 = require('./src/commands/pull-bucket')
+const createPartsV2 = require('./src/commands/create-parts')
+const commp = require('./src/commands/commp')
+const inspect = require('./src/commands/inspect')
 
 const runPullBucketV2 = async argv => {
   await parseBucketV2(argv.bucket, argv.prefix, argv.start, argv.concurrency, argv.checkHead, argv.force)
@@ -78,13 +78,8 @@ const commpOptions = yargs => {
 const yargs = require('yargs')
 // eslint-disable-next-line
 const args = yargs
-  // .command('pull-bucket <bucket> [prefix]', 'Load all the contents of a bucket', bucketOptions, runPullBucket)
   .command('pull-bucket-v2 <bucket> [prefix]', 'Parse and store bucket in unique table', bucketOptions, runPullBucketV2)
-  // .command('pull-file <bucket> <key>', 'Pull and parse one file', () => {}, runPullFile)
-  // .command('allocate <bucket>', 'Allocate all the data for a parsed bucket to parts', () => {}, runAllocator)
-  // .command('create-parts <bucket>', 'Create car files for each one gig data part', createPartsOptions, runCreateParts)
   .command('create-parts-v2 <bucket>', 'Create car files for each one gig data part', createParts2Options, createPartsV2)
   .command('inspect <bucket>', 'Inspect data about each entry for the bucket', inspectOptions, inspect)
   .command('commp <bucket>', 'Calculate and store commp for the CAR files in a bucket', commpOptions, commp)
-  // .command('pluck <url>', 'Remove all entries for URL', pluckOptions, pluck)
   .argv
