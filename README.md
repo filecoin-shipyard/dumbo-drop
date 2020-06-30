@@ -1,5 +1,15 @@
 # Massive Parallel Graph Builder
 
+When Filecoin stores CAR (Content Addressed Archive) files of UnixFS data there
+are a number of retreival features that can be used. When you pass a file to
+lotus to create a storage deal, that file is processed into a unixfs graph
+and stored in CAR file for you.
+
+For very large datasets it could take months or even years to process the data
+for storage using this method. This project allows you to process a very large
+amount of data using a very high degree of concurrency for storage in Filecoin
+using the "offline dealflow."
+
 This project uses Lambda to create massive IPLD graphs
 and then break them down into many .car files for storage
 in Filecoin.
@@ -7,6 +17,8 @@ in Filecoin.
 This project also uses Dynamo tables (currently hard coded)
 to store intermediary information about the graph as it is
 built.
+
+
 
 ## Setup
 
