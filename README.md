@@ -1,5 +1,11 @@
 # Massive Parallel Graph Builder
 
+## Status
+
+This repository is in a **frozen** state. It is not being maintained or kept in sync with the tools and libraries it builds on. Even though work on this repository has been **shelved**, anyone interested in updating or maintaining this project should express their interest on one Filecoin community conversation mediums: <https://github.com/filecoin-project/community#join-the-community>.
+
+---
+
 When Filecoin stores CAR (Content Addressed Archive) files of UnixFS data there
 are a number of retreival features that can be used. When you pass a file to
 lotus to create a storage deal, that file is processed into a unixfs graph
